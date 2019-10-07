@@ -96,7 +96,7 @@ func TestUndo(t *testing.T) {
 	doReadNext(t, &r, newToken(EOF, ""))
 }
 
-func TestReadString(t *testing.T) {
+func TestReadStringToken(t *testing.T) {
 	for json, val := range map[string]string{
 		`""`: "", `"abc"`: "abc", `"\""`: `"`,
 		`"\\\b\f\n\r\t"`: "\\\b\f\n\r\t",
@@ -106,6 +106,14 @@ func TestReadString(t *testing.T) {
 	} {
 		doReadTest(t, json, newStringToken(json, val))
 	}
+}
+
+func TestReadString(t *testing.T) {
+	r := NewReader([]byte(`"a\"bc"`))
+	v, err := r.ReadString()
+	assert.NoError(t, err)
+	assert.Equal(t, `a"bc`, v)
+	assert.NoError(t, r.Expect(EOF))
 }
 
 func TestReadArray(t *testing.T) {

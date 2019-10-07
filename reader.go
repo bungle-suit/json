@@ -286,6 +286,16 @@ func (r *Reader) ReadNumber() (float64, error) {
 	return strconv.ParseFloat(string(r.Buf[r.Start:r.End]), 64)
 }
 
+// ReadString return next string value, return non-nil error
+// if next token not string.
+func (r *Reader) ReadString() (string, error) {
+	if err := r.Expect(STRING); err != nil {
+		return "", err
+	}
+
+	return string(r.Str), nil
+}
+
 func (r *Reader) doNext() (tt TokenType, err error) {
 	r.Start = r.End
 	for i := r.Start; i < len(r.Buf); i++ {
