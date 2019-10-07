@@ -92,6 +92,13 @@ const (
 	EOF
 )
 
+// NewReader create a json reader from buf
+func NewReader(json []byte) *Reader {
+	r := &Reader{}
+	r.Init(json)
+	return r
+}
+
 // Init Reader struct
 func (r *Reader) Init(json []byte) {
 	r.Buf = json
@@ -267,6 +274,12 @@ func (r *Reader) ExpectName(name string) error {
 		return nil
 	}
 	return GenericFormatError()
+}
+
+// ReadNumber return next float value, return non-nil error
+// if next token not number.
+func (r *Reader) ReadNumber() (float64, error) {
+	return 0, nil
 }
 
 func (r *Reader) doNext() (tt TokenType, err error) {

@@ -1,0 +1,16 @@
+language: go
+
+go: 
+  - master
+
+install:
+  - go get -v -t ./...
+  - go install github.com/onsi/ginkgo/ginkgo
+  - export PATH=$PATH:$HOME/gopath/bin
+  - go get -u github.com/alecthomas/gometalinter
+  - $GOPATH/bin/gometalinter --install
+
+script: 
+  - $GOPATH/bin/ginkgo -r --randomizeAllSpecs --randomizeSuites --race --trace
+  - $GOPATH/bin/gometalinter --deadline=60s --enable=unused --exclude=causedby_string.go
+

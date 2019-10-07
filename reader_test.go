@@ -3,7 +3,7 @@ package json_test
 import (
 	"testing"
 
-	. "github.com/redforks/spork/json"
+	. "github.com/bungle-suit/json"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,12 +63,21 @@ func TestReadBool(t *testing.T) {
 	doReadTest(t, `false`, newToken(BOOL, `false`))
 }
 
-func TestReadNumber(t *testing.T) {
+func TestReadNumberToken(t *testing.T) {
 	for _, json := range []string{
 		`0`, `-0`, `234`, `-34`, `12.34`, `1E10`, `1.10`, `1e+10`, `13.4e-10`,
 	} {
 		doReadTest(t, json, newNumberToken(json))
 	}
+}
+
+func TestReadNumber(t *testing.T) {
+	buf := []byte("1")
+	r := NewReader(buf)
+
+	v, err := r.ReadNumber()
+	assert.NoError(t, err)
+	assert.Equal(t, float64(1), v)
 }
 
 func TestUndo(t *testing.T) {

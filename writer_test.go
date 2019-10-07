@@ -5,7 +5,7 @@ import (
 	"sort"
 	"testing"
 
-	. "github.com/redforks/spork/json"
+	. "github.com/bungle-suit/json"
 	"github.com/stretchr/testify/assert"
 )
 
