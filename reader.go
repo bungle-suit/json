@@ -279,7 +279,11 @@ func (r *Reader) ExpectName(name string) error {
 // ReadNumber return next float value, return non-nil error
 // if next token not number.
 func (r *Reader) ReadNumber() (float64, error) {
-	return 0, nil
+	if err := r.Expect(NUMBER); err != nil {
+		return 0, err
+	}
+
+	return strconv.ParseFloat(string(r.Buf[r.Start:r.End]), 64)
 }
 
 func (r *Reader) doNext() (tt TokenType, err error) {

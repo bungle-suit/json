@@ -78,6 +78,7 @@ func TestReadNumber(t *testing.T) {
 	v, err := r.ReadNumber()
 	assert.NoError(t, err)
 	assert.Equal(t, float64(1), v)
+	assert.NoError(t, r.Expect(EOF))
 }
 
 func TestUndo(t *testing.T) {
