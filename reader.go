@@ -171,7 +171,6 @@ func (r *Reader) arrayState(tt TokenType) (TokenType, error) {
 			return ttInvalid, errInvalidJSONFormat()
 		}
 		r.changeCurrent(statusArrayValue)
-		break
 	case BEGIN_ARRAY:
 		r.changeCurrent(statusArrayValue)
 		r.push(statusBeginArray)
@@ -484,7 +483,7 @@ func appendRune(buf []byte, r rune) []byte {
 		b = make([]byte, len(buf)+l, (len(buf)+l)*2)
 		copy(b, buf)
 	} else {
-		b = buf[:]
+		b = buf
 	}
 	utf8.EncodeRune(b[len(buf):len(buf)+l], r)
 	return b[0 : len(buf)+l]
