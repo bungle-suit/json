@@ -24,10 +24,6 @@ const (
 	statusEOF
 )
 
-func GenericFormatError() error {
-	return fmt.Errorf("[%s] Unexpected json format", tag)
-}
-
 func errInvalidJSONFormat() error {
 	return fmt.Errorf("[%s] Invalid json format", tag)
 }
@@ -260,7 +256,7 @@ func (r *Reader) Expect(tt TokenType) error {
 	if t, err := r.Next(); err != nil {
 		return err
 	} else if t != tt {
-		return GenericFormatError()
+		return fmt.Errorf("[%s] Expect %s token, but got %s", tag, tt, t)
 	}
 	return nil
 }
@@ -273,7 +269,7 @@ func (r *Reader) ExpectName(name string) error {
 	if bytes.Equal([]byte(name), r.Str) {
 		return nil
 	}
-	return GenericFormatError()
+	return fmt.Errorf("[%s] Expect next is property name '%s', but got '%s'", tag, name, string(r.Str))
 }
 
 // ReadNumber return next float value, return non-nil error

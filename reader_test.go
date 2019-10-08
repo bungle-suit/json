@@ -171,18 +171,18 @@ func TestReadBadJson(t *testing.T) {
 func TestReadExpectedNext(t *testing.T) {
 	var r Reader
 	r.Init([]byte("1"))
-	assert.Equal(t, GenericFormatError(), r.Expect(BEGIN_ARRAY))
+	assert.Error(t, r.Expect(BEGIN_ARRAY))
 }
 
 func TestExpectedNextName(t *testing.T) {
 	var r Reader
 	r.Init([]byte("1"))
-	assert.Equal(t, GenericFormatError(), r.ExpectName("a"))
+	assert.Error(t, r.ExpectName("a"))
 
 	r.Init([]byte(`{"Foo":2,"Bar":3}`))
 	_, err := r.Next()
 	assert.NoError(t, err)
-	assert.Equal(t, GenericFormatError(), r.ExpectName("Bar"))
+	assert.Error(t, r.ExpectName("Bar"))
 	_, err = r.Next()
 	assert.NoError(t, err)
 	assert.NoError(t, r.ExpectName("Bar"))
