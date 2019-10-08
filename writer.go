@@ -239,6 +239,36 @@ func (w *Writer) popState(expectedCurrentState blockType) writerState {
 	return result
 }
 
+func (w *Writer) writeEscapedChar(ch byte) {
+	w.writeChar('\\')
+	w.writeChar(ch)
+}
+
+func (w *Writer) writeEscaped(b byte) {
+	switch b {
+	case '\\', '"':
+		w.writeEscapedChar(b)
+	case '\n':
+		w.writeEscapedChar('n')
+	case '\r':
+		w.writeEscapedChar('r')
+	case '\b':
+		w.writeEscapedChar('b')
+	case '\f':
+		w.writeEscapedChar('f')
+	case '\t':
+		w.writeEscapedChar('t')
+	default:
+		// This encodes bytes < 0x20 except for \n and \r,
+		// as well as < and >. The latter are escaped because they
+		// can lead to security holes when user-controlled strings
+		// are rendered into JSON and served to some browsers.
+		w.writeString(`\u00`)
+		w.writeChar(hex[b>>4])
+		w.writeChar(hex[b&0xF])
+	}
+}
+
 func (w *Writer) writeStringOnly(s string) {
 	w.writeChar('"')
 
@@ -250,37 +280,11 @@ func (w *Writer) writeStringOnly(s string) {
 				i++
 				continue
 			}
+
 			if start < i {
 				w.writeString(s[start:i])
 			}
-			switch b {
-			case '\\', '"':
-				w.writeChar('\\')
-				w.writeChar(b)
-			case '\n':
-				w.writeChar('\\')
-				w.writeChar('n')
-			case '\r':
-				w.writeChar('\\')
-				w.writeChar('r')
-			case '\b':
-				w.writeChar('\\')
-				w.writeChar('b')
-			case '\f':
-				w.writeChar('\\')
-				w.writeChar('f')
-			case '\t':
-				w.writeChar('\\')
-				w.writeChar('t')
-			default:
-				// This encodes bytes < 0x20 except for \n and \r,
-				// as well as < and >. The latter are escaped because they
-				// can lead to security holes when user-controlled strings
-				// are rendered into JSON and served to some browsers.
-				w.writeString(`\u00`)
-				w.writeChar(hex[b>>4])
-				w.writeChar(hex[b&0xF])
-			}
+			w.writeEscaped(b)
 			i++
 			start = i
 			continue

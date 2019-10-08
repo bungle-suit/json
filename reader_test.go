@@ -18,15 +18,15 @@ func newToken(tt TokenType, trunk string) tokenRec {
 }
 
 func newStringToken(trunk string, str string) tokenRec {
-	return tokenRec{tt: STRING, trunk: trunk, str: str}
+	return tokenRec{tt: String, trunk: trunk, str: str}
 }
 
 func newNameToken(trunk string, name string) tokenRec {
-	return tokenRec{tt: PROPERTY_NAME, trunk: trunk, str: name}
+	return tokenRec{tt: PropertyName, trunk: trunk, str: name}
 }
 
 func newNumberToken(trunk string) tokenRec {
-	return tokenRec{tt: NUMBER, trunk: trunk}
+	return tokenRec{tt: Number, trunk: trunk}
 }
 
 func doReadNext(t *testing.T, r *Reader, exp tokenRec) {
@@ -34,7 +34,7 @@ func doReadNext(t *testing.T, r *Reader, exp tokenRec) {
 	assert.NoError(t, err)
 	assert.Equal(t, exp.tt, tt)
 	assert.Equal(t, exp.trunk, string(r.Buf[r.Start:r.End]))
-	if exp.tt == STRING || exp.tt == PROPERTY_NAME {
+	if exp.tt == String || exp.tt == PropertyName {
 		assert.Equal(t, exp.str, string(r.Str))
 	}
 }
@@ -53,14 +53,14 @@ func doReadTest(t *testing.T, json string, tokens ...tokenRec) {
 }
 
 func TestReadNull(t *testing.T) {
-	doReadTest(t, `null`, newToken(NULL, `null`))
-	doReadTest(t, ` null`, newToken(NULL, `null`))
-	doReadTest(t, " \t\r\nnull\n", newToken(NULL, `null`))
+	doReadTest(t, `null`, newToken(Null, `null`))
+	doReadTest(t, ` null`, newToken(Null, `null`))
+	doReadTest(t, " \t\r\nnull\n", newToken(Null, `null`))
 }
 
 func TestReadBool(t *testing.T) {
-	doReadTest(t, `true`, newToken(BOOL, `true`))
-	doReadTest(t, `false`, newToken(BOOL, `false`))
+	doReadTest(t, `true`, newToken(Bool, `true`))
+	doReadTest(t, `false`, newToken(Bool, `false`))
 }
 
 func TestReadNumberToken(t *testing.T) {
@@ -85,13 +85,13 @@ func TestUndo(t *testing.T) {
 	var r Reader
 	r.Init([]byte(`null`))
 
-	doReadNext(t, &r, newToken(NULL, "null"))
+	doReadNext(t, &r, newToken(Null, "null"))
 
 	r.Undo()
-	doReadNext(t, &r, newToken(NULL, "null"))
+	doReadNext(t, &r, newToken(Null, "null"))
 
 	r.Undo()
-	doReadNext(t, &r, newToken(NULL, "null"))
+	doReadNext(t, &r, newToken(Null, "null"))
 
 	doReadNext(t, &r, newToken(EOF, ""))
 }
@@ -117,31 +117,31 @@ func TestReadString(t *testing.T) {
 }
 
 func TestReadArray(t *testing.T) {
-	doReadTest(t, `[]`, newToken(BEGIN_ARRAY, `[`), newToken(END_ARRAY, `]`))
-	doReadTest(t, `[1]`, newToken(BEGIN_ARRAY, `[`), newNumberToken(`1`), newToken(END_ARRAY, `]`))
-	doReadTest(t, `[1,true,[],{"":1},false,"",[null]]`, newToken(BEGIN_ARRAY, `[`),
+	doReadTest(t, `[]`, newToken(BeginArray, `[`), newToken(EndArray, `]`))
+	doReadTest(t, `[1]`, newToken(BeginArray, `[`), newNumberToken(`1`), newToken(EndArray, `]`))
+	doReadTest(t, `[1,true,[],{"":1},false,"",[null]]`, newToken(BeginArray, `[`),
 		newNumberToken(`1`),
-		newToken(BOOL, `true`),
-		newToken(BEGIN_ARRAY, `[`), newToken(END_ARRAY, `]`),
-		newToken(BEGIN_OBJECT, `{`), newNameToken(`""`, ""), newNumberToken(`1`), newToken(END_OBJECT, `}`),
-		newToken(BOOL, `false`),
+		newToken(Bool, `true`),
+		newToken(BeginArray, `[`), newToken(EndArray, `]`),
+		newToken(BeginObject, `{`), newNameToken(`""`, ""), newNumberToken(`1`), newToken(EndObject, `}`),
+		newToken(Bool, `false`),
 		newStringToken(`""`, ""),
-		newToken(BEGIN_ARRAY, `[`), newToken(NULL, `null`), newToken(END_ARRAY, `]`),
-		newToken(END_ARRAY, `]`))
+		newToken(BeginArray, `[`), newToken(Null, `null`), newToken(EndArray, `]`),
+		newToken(EndArray, `]`))
 }
 
 func TestReadObject(t *testing.T) {
-	doReadTest(t, `{}`, newToken(BEGIN_OBJECT, `{`), newToken(END_OBJECT, `}`))
-	doReadTest(t, `{"a":2}`, newToken(BEGIN_OBJECT, `{`),
+	doReadTest(t, `{}`, newToken(BeginObject, `{`), newToken(EndObject, `}`))
+	doReadTest(t, `{"a":2}`, newToken(BeginObject, `{`),
 		newNameToken(`"a"`, "a"), newNumberToken("2"),
-		newToken(END_OBJECT, `}`))
-	doReadTest(t, `{"a":true,"b":null,"c":"","d":[],"e":{}}`, newToken(BEGIN_OBJECT, "{"),
-		newNameToken(`"a"`, "a"), newToken(BOOL, `true`),
-		newNameToken(`"b"`, "b"), newToken(NULL, `null`),
+		newToken(EndObject, `}`))
+	doReadTest(t, `{"a":true,"b":null,"c":"","d":[],"e":{}}`, newToken(BeginObject, "{"),
+		newNameToken(`"a"`, "a"), newToken(Bool, `true`),
+		newNameToken(`"b"`, "b"), newToken(Null, `null`),
 		newNameToken(`"c"`, "c"), newStringToken(`""`, ""),
-		newNameToken(`"d"`, "d"), newToken(BEGIN_ARRAY, `[`), newToken(END_ARRAY, `]`),
-		newNameToken(`"e"`, "e"), newToken(BEGIN_OBJECT, `{`), newToken(END_OBJECT, `}`),
-		newToken(END_OBJECT, `}`))
+		newNameToken(`"d"`, "d"), newToken(BeginArray, `[`), newToken(EndArray, `]`),
+		newNameToken(`"e"`, "e"), newToken(BeginObject, `{`), newToken(EndObject, `}`),
+		newToken(EndObject, `}`))
 }
 
 func TestReadBadJson(t *testing.T) {
@@ -171,7 +171,7 @@ func TestReadBadJson(t *testing.T) {
 func TestReadExpectedNext(t *testing.T) {
 	var r Reader
 	r.Init([]byte("1"))
-	assert.Error(t, r.Expect(BEGIN_ARRAY))
+	assert.Error(t, r.Expect(BeginArray))
 }
 
 func TestExpectedNextName(t *testing.T) {

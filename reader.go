@@ -61,8 +61,8 @@ const (
 	ttInvalid TokenType = iota
 	ttComma
 	ttColon
-	NULL
-	BOOL
+	Null
+	Bool
 	// If the token is number, the number value not parsed, caller should parse
 	// itself from Buf[Start:End]. Why Reader not parse number as double? Because:
 	//
@@ -73,18 +73,18 @@ const (
 	//     she knows the underlay type exactly.
 	//
 	// And also means, the number format maybe invalid even the Reader report it
-	// as a valid NUMBER, because Reader use a very simple way to parse number
+	// as a valid Number, because Reader use a very simple way to parse number
 	// string. Caller should process the error, such as check the err result of
 	// ParseFloat().
-	NUMBER
+	Number
 	// If the token is string or property name, Buf[Start:End] contains the raw
 	// json string trunk include `"` quote. The parsed value stores in Buf.Str field.
-	STRING
-	BEGIN_OBJECT
-	PROPERTY_NAME // Json object name
-	END_OBJECT
-	BEGIN_ARRAY
-	END_ARRAY
+	String
+	BeginObject
+	PropertyName // Json object name
+	EndObject
+	BeginArray
+	EndArray
 	EOF
 )
 
@@ -133,7 +133,7 @@ func (r *Reader) changeCurrent(status readerStatus) {
 
 func (r *Reader) topLevelState(tt TokenType) (TokenType, error) {
 	switch tt {
-	case NULL, BOOL, NUMBER, STRING:
+	case Null, Bool, Number, String:
 		if r.current() != statusBof {
 			return ttInvalid, errInvalidJSONFormat()
 		}
@@ -143,11 +143,11 @@ func (r *Reader) topLevelState(tt TokenType) (TokenType, error) {
 			return ttInvalid, errInvalidJSONFormat()
 		}
 		r.changeCurrent(statusEOF)
-	case BEGIN_ARRAY:
+	case BeginArray:
 		r.changeCurrent(statusTopValue)
 		r.state = (*Reader).arrayState
 		r.push(statusBeginArray)
-	case BEGIN_OBJECT:
+	case BeginObject:
 		r.changeCurrent(statusTopValue)
 		r.state = (*Reader).objectState
 		r.push(statusBeginObject)
@@ -159,7 +159,7 @@ func (r *Reader) topLevelState(tt TokenType) (TokenType, error) {
 
 func (r *Reader) arrayState(tt TokenType) (TokenType, error) {
 	switch tt {
-	case END_ARRAY:
+	case EndArray:
 		if r.current() != statusBeginArray && r.current() != statusArrayValue {
 			return ttInvalid, errInvalidJSONFormat()
 		}
@@ -169,16 +169,16 @@ func (r *Reader) arrayState(tt TokenType) (TokenType, error) {
 			return ttInvalid, errInvalidJSONFormat()
 		}
 		r.changeCurrent(statusComma)
-	case NULL, BOOL, NUMBER, STRING:
+	case Null, Bool, Number, String:
 		if r.current() != statusBeginArray && r.current() != statusComma {
 			return ttInvalid, errInvalidJSONFormat()
 		}
 		r.changeCurrent(statusArrayValue)
-	case BEGIN_ARRAY:
+	case BeginArray:
 		r.changeCurrent(statusArrayValue)
 		r.push(statusBeginArray)
 		r.state = (*Reader).arrayState
-	case BEGIN_OBJECT:
+	case BeginObject:
 		r.changeCurrent(statusArrayValue)
 		r.push(statusBeginObject)
 		r.state = (*Reader).objectState
@@ -190,19 +190,19 @@ func (r *Reader) arrayState(tt TokenType) (TokenType, error) {
 
 func (r *Reader) objectState(tt TokenType) (TokenType, error) {
 	switch tt {
-	case END_OBJECT:
+	case EndObject:
 		if r.current() != statusBeginObject && r.current() != statusObjectValue {
 			return ttInvalid, errInvalidJSONFormat()
 		}
 		r.pop()
-	case STRING:
+	case String:
 		switch r.current() {
 		case statusBeginObject, statusComma:
 			r.changeCurrent(statusObjectName)
-			return PROPERTY_NAME, nil
+			return PropertyName, nil
 		}
 		fallthrough
-	case NUMBER, BOOL, NULL:
+	case Number, Bool, Null:
 		if r.current() != statusColon {
 			return ttInvalid, errInvalidJSONFormat()
 		}
@@ -217,14 +217,14 @@ func (r *Reader) objectState(tt TokenType) (TokenType, error) {
 			return ttInvalid, errInvalidJSONFormat()
 		}
 		r.changeCurrent(statusComma)
-	case BEGIN_ARRAY:
+	case BeginArray:
 		if r.current() != statusColon {
 			return ttInvalid, errInvalidJSONFormat()
 		}
 		r.changeCurrent(statusObjectValue)
 		r.state = (*Reader).arrayState
 		r.push(statusBeginArray)
-	case BEGIN_OBJECT:
+	case BeginObject:
 		if r.current() != statusColon {
 			return ttInvalid, errInvalidJSONFormat()
 		}
@@ -261,9 +261,9 @@ func (r *Reader) Expect(tt TokenType) error {
 	return nil
 }
 
-// If next token is not PROPERTY_NAME, or its name not expected, return non-nil error
+// If next token is not PropertyName, or its name not expected, return non-nil error
 func (r *Reader) ExpectName(name string) error {
-	if err := r.Expect(PROPERTY_NAME); err != nil {
+	if err := r.Expect(PropertyName); err != nil {
 		return err
 	}
 	if bytes.Equal([]byte(name), r.Str) {
@@ -275,7 +275,7 @@ func (r *Reader) ExpectName(name string) error {
 // ReadNumber return next float value, return non-nil error
 // if next token not number.
 func (r *Reader) ReadNumber() (float64, error) {
-	if err := r.Expect(NUMBER); err != nil {
+	if err := r.Expect(Number); err != nil {
 		return 0, err
 	}
 
@@ -285,7 +285,7 @@ func (r *Reader) ReadNumber() (float64, error) {
 // ReadString return next string value, return non-nil error
 // if next token not string.
 func (r *Reader) ReadString() (string, error) {
-	if err := r.Expect(STRING); err != nil {
+	if err := r.Expect(String); err != nil {
 		return "", err
 	}
 
@@ -295,48 +295,41 @@ func (r *Reader) ReadString() (string, error) {
 func (r *Reader) doNext() (tt TokenType, err error) {
 	r.Start = r.End
 	for i := r.Start; i < len(r.Buf); i++ {
+		r.Start = i
 		switch r.Buf[i] {
 		case ' ', '\t', '\n', '\r':
-			continue
 		case 'n':
-			r.Start = i
 			return r.filterState(r.parseNull())
 		case 't':
-			r.Start = i
 			return r.filterState(r.parseTrue())
 		case 'f':
-			r.Start = i
 			return r.filterState(r.parseFalse())
 		case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-			r.Start = i
 			return r.filterState(r.parseNumber())
 		case '"':
-			r.Start = i
 			return r.filterState(r.parseString())
 		case '[':
-			r.Start, r.End = i, i+1
-			return r.state(r, BEGIN_ARRAY)
+			r.End = i + 1
+			return r.state(r, BeginArray)
 		case ']':
-			r.Start, r.End = i, i+1
-			return r.state(r, END_ARRAY)
+			r.End = i + 1
+			return r.state(r, EndArray)
 		case '{':
-			r.Start, r.End = i, i+1
-			return r.state(r, BEGIN_OBJECT)
+			r.End = i + 1
+			return r.state(r, BeginObject)
 		case '}':
-			r.Start, r.End = i, i+1
-			return r.state(r, END_OBJECT)
+			r.End = i + 1
+			return r.state(r, EndObject)
 		case ',':
-			r.Start, r.End = i, i+1
+			r.End = i + 1
 			if tt, err = r.state(r, ttComma); err != nil {
 				return
 			}
-			continue
 		case ':':
-			r.Start, r.End = i, i+1
+			r.End = i + 1
 			if tt, err = r.state(r, ttColon); err != nil {
 				return
 			}
-			continue
 		default:
 			return ttInvalid, errInvalidJSONFormat()
 		}
@@ -363,7 +356,7 @@ func (r *Reader) parseString() (TokenType, error) {
 		switch r.Buf[i] {
 		case '"':
 			r.End = i + 1
-			return STRING, nil
+			return String, nil
 		case '\\':
 			if len(r.Buf)-(i+1) <= 0 {
 				return ttInvalid, errInvalidJSONFormat()
@@ -407,7 +400,7 @@ outFor:
 		}
 	}
 	r.End = i
-	return NUMBER, nil
+	return Number, nil
 }
 
 func (r *Reader) parseTrue() (TokenType, error) {
@@ -422,7 +415,7 @@ func (r *Reader) parseTrue() (TokenType, error) {
 	if err := r.requireEndToken(); err != nil {
 		return ttInvalid, err
 	}
-	return BOOL, nil
+	return Bool, nil
 }
 
 func (r *Reader) parseFalse() (TokenType, error) {
@@ -436,7 +429,7 @@ func (r *Reader) parseFalse() (TokenType, error) {
 	if err := r.requireEndToken(); err != nil {
 		return ttInvalid, err
 	}
-	return BOOL, nil
+	return Bool, nil
 }
 
 func (r *Reader) parseNull() (TokenType, error) {
@@ -451,7 +444,7 @@ func (r *Reader) parseNull() (TokenType, error) {
 	if err := r.requireEndToken(); err != nil {
 		return ttInvalid, err
 	}
-	return NULL, nil
+	return Null, nil
 }
 
 // Check does buffer has at least l bytes in buffer

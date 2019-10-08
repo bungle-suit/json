@@ -4,7 +4,7 @@ package json
 
 import "fmt"
 
-const _TokenType_name = "ttInvalidttCommattColonNULLBOOLNUMBERSTRINGBEGIN_OBJECTPROPERTY_NAMEEND_OBJECTBEGIN_ARRAYEND_ARRAYEOF"
+const _TokenType_name = "ttInvalidttCommattColonNullBoolNumberStringBeginObjectPropertyNameEndObjectBeginArrayEndArrayEOF"
 
 var _TokenType_index = [...]uint8{0, 9, 16, 23, 27, 31, 37, 43, 55, 68, 78, 89, 98, 101}
 
